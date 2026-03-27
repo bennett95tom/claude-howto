@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Claude Quest - Interactive Learning Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            height: 95vh;
+            background: white;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .title {
+            font-size: 1.4em;
+            font-weight: bold;
+        }
+
+        .stats {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            font-size: 0.9em;
+        }
+
+        .stat-item {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 10px;
+            border-radius: 15px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.2s;
+        }
+
+        .btn-icon:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.user .bubble {
+            background: #667eea;
+            color: white;
+        }
+
+        .message.ai .bubble {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .bubble {
+            max-width: 70%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .input-area {
+            padding: 15px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 8px;
+        }
+
+        input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-family: inherit;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 3px rgba(102, 126, 234, 0.3);
+        }
+
+        button {
+            padding: 10px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        .suggestions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .suggestion-btn {
+            padding: 6px 10px;
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s;
+        }
+
+        .suggestion-btn:hover {
+            background: #e0e0e0;
+            border-color: #667eea;
+        }
+
+        .popup {
+            position: fixed;
+            font-weight: bold;
+            pointer-events: none;
+            animation: popFloat 2s ease-out forwards;
+        }
+
+        @keyframes popFloat {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-80px);
+            }
+        }
+
+        .xp-popup {
+            color: #4caf50;
+            font-size: 1.2em;
+        }
+
+        .achievement {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: slideInRight 0.5s ease, slideOutRight 0.5s ease 3.5s forwards;
+            z-index: 1000;
+            font-weight: bold;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutRight {
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        .typing {
+            display: flex;
+            gap: 4px;
+            padding: 10px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #999;
+            animation: typingBounce 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingBounce {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">🎮 Claude Quest</div>
+            <div class="stats">
+                <div class="stat-item">Lvl <span id="level">1</span></div>
+                <div class="stat-item">XP <span id="xp">0</span>/<span id="maxXp">100</span></div>
+                <div class="stat-item">🔥 <span id="streak">0</span></div>
+                <div class="stat-item">📚 <span id="topics">0</span></div>
+            </div>
+            <div class="controls">
+                <button class="btn-icon" id="soundBtn" onclick="toggleSound()">🔊</button>
+                <button class="btn-icon" id="speechBtn" onclick="toggleSpeech()">🎤</button>
+            </div>
+        </div>
+
+        <div class="chat-area" id="chat"></div>
+
+        <div class="input-area">
+            <input type="text" id="input" placeholder="Tell me what you want to learn..." onkeypress="if(event.key==='Enter') { event.preventDefault(); send(); }">
+            <button onclick="send(event)">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        const state = {
+            level: 1,
+            xp: 0,
+            maxXp: 100,
+            topics: 0,
+            streak: 0,
+            achievements: new Set(),
+            sound: true,
+            speech: true,
+            processing: false
+        };
+
+        // Audio
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                try {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                } catch(e) {
+                    console.log('Audio not available');
+                }
+            }
+        }
+
+        function playSound(freq1, freq2, duration) {
+            if (!state.sound || !audioCtx) return;
+            try {
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.frequency.setValueAtTime(freq1, now);
+                if (freq2) osc.frequency.setValueAtTime(freq2, now + 0.05);
+
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+                osc.start(now);
+                osc.stop(now + duration);
+            } catch(e) {
+                console.log('Sound error:', e);
+            }
+        }
+
+        function toggleSound() {
+            state.sound = !state.sound;
+            document.getElementById('soundBtn').textContent = state.sound ? '🔊' : '🔇';
+            localStorage.setItem('sound', state.sound);
+        }
+
+        function toggleSpeech() {
+            state.speech = !state.speech;
+            document.getElementById('speechBtn').textContent = state.speech ? '🎤' : '🤐';
+            localStorage.setItem('speech', state.speech);
+        }
+
+        function speak(text) {
+            if (!state.speech) return;
+            try {
+                window.speechSynthesis.cancel();
+                const clean = text.replace(/[*#\[\]]/g, '').trim();
+                const u = new SpeechSynthesisUtterance(clean);
+                u.rate = 1;
+                u.pitch = 1;
+                u.volume = 0.8;
+                window.speechSynthesis.speak(u);
+            } catch(e) {
+                console.log('Speech error:', e);
+            }
+        }
+
+        // Topics Database
+        const topics = {
+            'slash commands': {
+                xp: 15,
+                content: `⚡ **Slash Commands - Your Quick Wins**
+
+Slash commands are like superpowers! They instantly do things for you without explaining.
+
+**Popular ones:**
+• /optimize - Find slow code
+• /pr - Get pull requests ready
+• /commit - Better messages
+• /review - Review code
+• /test - Expand tests
+
+**Why use them?**
+✓ Lightning fast
+✓ Works the same way every time
+✓ Your whole team can use them
+
+**How to make your own:**
+Create .claude/commands/my-command.md:
+\`\`\`
+---
+prompt: What you want it to do
+---
+Your instructions
+\`\`\`
+
+Then restart and type /my-command!
+
+You're learning fast! 🎯`
+            },
+
+            'memory': {
+                xp: 10,
+                content: `🧠 **Memory - Teaching Claude About You**
+
+Memory files are sticky notes for Claude. Once set up, Claude reads them automatically!
+
+**Two types:**
+
+1. **Project Memory** (.claude/CLAUDE.md)
+   - Team coding rules
+   - Best practices
+   - Project style
+
+2. **Personal Memory** (~/.claude/CLAUDE.md)
+   - Your preferences
+   - How you like to work
+   - Your habits
+
+**What goes in memory:**
+✓ Team standards
+✓ Your coding style
+✓ Project decisions
+✓ What worked before
+
+Claude will read these automatically and apply them to your work!
+
+This is a game-changer! 🚀`
+            },
+
+            'skills': {
+                xp: 12,
+                content: `🎯 **Skills - Build Your Custom Tools**
+
+Skills are your personal playbooks. They're reusable workflows Claude can reference.
+
+**What skills do:**
+• Save time on repetitive work
+• Keep things consistent
+• Package your knowledge
+• Share with your team
+
+**Where they live:**
+.claude/skills/your-skill/SKILL.md
+
+**What's in a skill:**
+• Instructions
+• Best practices
+• Examples
+• Templates
+
+**Create one for:**
+✓ Code reviews
+✓ Writing tests
+✓ Documentation
+✓ Any workflow you repeat
+
+Skills are YOUR superpower! ⚡`
+            },
+
+            'subagents': {
+                xp: 14,
+                content: `🤖 **Subagents - Delegate Like a Boss**
+
+Subagents are Claude clones that work independently on complex tasks.
+
+**When to use them:**
+• Big research tasks
+• Multi-step workflows
+• Parallel work
+• Complex analysis
+
+**How they work:**
+1. You create a subagent
+2. Give it a task
+3. It works while you do other stuff
+4. You get results back
+
+**Why they're awesome:**
+✓ Break big tasks into pieces
+✓ Work faster (parallel)
+✓ Handle complexity
+✓ Free up your brain
+
+Subagents handle the heavy lifting! 💪`
+            },
+
+            'mcp': {
+                xp: 16,
+                content: `🔌 **MCP - Connect Everything**
+
+MCP (Model Context Protocol) connects Claude to your tools and services.
+
+**What MCP does:**
+• Links Claude to APIs
+• Lets Claude use your data
+• Automates integrations
+• Creates new possibilities
+
+**Common MCPs:**
+✓ Slack integration
+✓ GitHub access
+✓ Database queries
+✓ Custom APIs
+
+**Why it matters:**
+Claude can now read from and write to your entire toolkit. Connect databases, files, services—anything!
+
+**How to use:**
+Most MCPs are already connected. Just ask Claude to use them!
+
+MCPs are the connective tissue! 🔗`
+            },
+
+            'hooks': {
+                xp: 11,
+                content: `🎣 **Hooks - Automation Magic**
+
+Hooks trigger Claude to run automatically when certain things happen.
+
+**Types of hooks:**
+• Before you make changes
+• After you complete tasks
+• On file changes
+• On specific events
+
+**What they enable:**
+✓ Auto-formatting code
+✓ Running tests automatically
+✓ Syncing data
+✓ Keeping things fresh
+
+**How they work:**
+1. Something happens (event)
+2. Hook triggers
+3. Claude does something
+4. Everything stays in sync
+
+**Examples:**
+• Format code before commits
+• Update docs after changes
+• Run tests on save
+• Sync configs automatically
+
+Hooks keep everything in harmony! 🎼`
+            },
+
+            'plugins': {
+                xp: 13,
+                content: `📦 **Plugins - Extend Everything**
+
+Plugins bundle skills, MCPs, and commands together into one package.
+
+**What's in a plugin:**
+• Custom commands
+• Skills and workflows
+• Integrations (MCPs)
+• Team templates
+
+**Why use plugins:**
+✓ Share with your team
+✓ Reuse workflows
+✓ Standardize processes
+✓ Easy to install
+
+**How to use:**
+Install once, use everywhere. Plugins apply to your whole workspace.
+
+**Create plugins for:**
+• Team workflows
+• Company standards
+• Custom tools
+• Repeated processes
+
+Plugins multiply your power! 🚀`
+            },
+
+            'planning mode': {
+                xp: 12,
+                content: `📋 **Planning Mode - Think Before Acting**
+
+Planning mode is where Claude thinks out loud before doing anything.
+
+**What it does:**
+• Breaks down big tasks
+• Plans the approach
+• Identifies risks
+• Gets your approval
+
+**When to use it:**
+• Complex projects
+• Risky changes
+• Architectural decisions
+• Big refactors
+
+**The flow:**
+1. Claude creates a detailed plan
+2. You review it
+3. You approve or suggest changes
+4. Claude executes the approved plan
+
+**Benefits:**
+✓ Catches issues early
+✓ You stay in control
+✓ Better outcomes
+✓ No surprises
+
+Planning mode prevents mistakes! ✅`
+            },
+
+            'checkpoints': {
+                xp: 10,
+                content: `🎯 **Checkpoints - Save Your Progress**
+
+Checkpoints are like save points in games. They capture your state.
+
+**What checkpoints save:**
+✓ Current code state
+✓ File snapshots
+✓ Configuration
+✓ Context
+
+**How to use them:**
+Create checkpoints before big changes. Easy to revert if needed.
+
+**When to checkpoint:**
+• Before major refactors
+• Before risky changes
+• At milestones
+• Before experiments
+
+**Benefits:**
+✓ Safe to experiment
+✓ Easy rollbacks
+✓ Track progress
+✓ Never lose work
+
+Checkpoints are your safety net! 🛡️`
+            },
+
+            'cli': {
+                xp: 11,
+                content: `💻 **Claude Code - The Command Line**
+
+Claude Code is how you use Claude from your terminal.
+
+**What it does:**
+• Run Claude from your computer
+• Automate tasks
+• Integrate with your tools
+• No web required
+
+**Basic usage:**
+\`claude <your task>\`
+
+**What you can do:**
+✓ Create files
+✓ Edit code
+✓ Run commands
+✓ Build projects
+
+**Why it's powerful:**
+• Works in your environment
+• Integrates with your shell
+• No context switching
+• Pure command line power
+
+**Get it:**
+Just install and start using!
+
+Claude Code brings power to your terminal! ⚡`
+            },
+
+            'advanced features': {
+                xp: 15,
+                content: `🌟 **Advanced Features - The Deep Cuts**
+
+Once you master the basics, these features unlock serious power.
+
+**Advanced topics:**
+• Custom agents
+• Complex automation
+• Advanced MCP creation
+• Performance optimization
+• Security hardening
+
+**When you're ready:**
+✓ You know the basics
+✓ You want more control
+✓ You're building complex systems
+✓ You need custom solutions
+
+**Benefits of going deep:**
+✓ Maximum flexibility
+✓ Custom workflows
+✓ Team integration
+✓ Enterprise scale
+
+**Next steps:**
+• Build your own plugins
+• Create custom MCPs
+• Design team workflows
+• Automate everything
+
+You're ready for anything! 🚀`
+            },
+
+            'get started': {
+                xp: 8,
+                content: `🚀 **Getting Started - Your First Steps**
+
+Welcome to Claude Quest! Let's learn how Claude actually works.
+
+**What is Claude?**
+Claude is an AI assistant that can code, write, analyze, and think through problems with you.
+
+**Where you'll use Claude:**
+✓ In Claude.ai (the website)
+✓ On your computer with Claude Code
+✓ In your IDEs and tools
+✓ Anywhere you work
+
+**Start here:**
+1. Learn about **slash commands** - Quick shortcuts
+2. Explore **memory** - Teach Claude about you
+3. Try **skills** - Your custom playbooks
+
+**Then go deeper:**
+→ Discover subagents, MCP, plugins
+→ Learn automation with hooks
+→ Master planning mode
+
+**Remember:**
+The best way to learn is by doing. Ask Claude anything!
+
+You've got this! 💪`
+            }
+        };
+
+        // Achievements
+        const achievements = {
+            first: '👣 First Step',
+            five: '🔥 Learning Spree',
+            ten: '📚 Knowledge Seeker',
+            level5: '⭐ Rising Star',
+            level10: '🏆 Champion'
+        };
+
+        // Utility Functions
+        function send(e) {
+            if (e) e.preventDefault();
+            if (state.processing) return;
+
+            const input = document.getElementById('input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            state.processing = true;
+            initAudio();
+            addMessage(text, 'user');
+            input.value = '';
+
+            addTyping();
+            setTimeout(() => {
+                processMessage(text);
+                state.processing = false;
+            }, 800);
+        }
+
+        function addMessage(text, type) {
+            const chat = document.getElementById('chat');
+            const div = document.createElement('div');
+            div.className = 'message ' + type;
+
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.textContent = text;
+
+            div.appendChild(bubble);
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function addTyping() {
+            const chat = document.getElementById('chat');
+            const div = document.createElement('div');
+            div.className = 'message ai';
+            div.id = 'typing';
+            div.innerHTML = '<div class="bubble"><div class="typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>';
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function removeTyping() {
+            const t = document.getElementById('typing');
+            if (t) t.remove();
+        }
+
+        function processMessage(msg) {
+            removeTyping();
+            const lower = msg.toLowerCase();
+            let found = null;
+
+            for (let topic in topics) {
+                if (lower.includes(topic)) {
+                    found = topic;
+                    break;
+                }
+            }
+
+            if (lower.includes('help') || lower.includes('command')) {
+                addMessage('📚 You can learn: ' + Object.keys(topics).join(' • ') + '\n\nOr type "stats", "reset", or "achievements"', 'ai');
+            } else if (lower.includes('stats')) {
+                addMessage(`📊 Stats:\nLevel: ${state.level}\nXP: ${state.xp}/${state.maxXp}\nTopics: ${state.topics}\nStreak: ${state.streak}`, 'ai');
+            } else if (lower.includes('reset')) {
+                state.level = 1;
+                state.xp = 0;
+                state.maxXp = 100;
+                state.topics = 0;
+                state.streak = 0;
+                state.achievements.clear();
+                updateStats();
+                addMessage('🔄 Reset! Ready to learn again? 🚀', 'ai');
+            } else if (lower.includes('achievement')) {
+                const ach = state.achievements.size === 0 ? 'None yet! Keep learning! 🎯' : Array.from(state.achievements).join(' ');
+                addMessage(`🏆 ${ach}`, 'ai');
+            } else if (found) {
+                const topic = topics[found];
+                addMessage(topic.content, 'ai');
+                speak(topic.content);
+                awardXP(topic.xp);
+                setTimeout(() => showSuggestions(found), 1000);
+            } else {
+                addMessage("Try asking about any of these: " + Object.keys(topics).slice(0, 4).join(', ') + "...", 'ai');
+            }
+        }
+
+        function awardXP(xp) {
+            state.xp += xp;
+            state.topics++;
+            state.streak++;
+
+            playSound(800, 1000, 0.1);
+
+            while (state.xp >= state.maxXp) {
+                state.xp -= state.maxXp;
+                state.level++;
+                state.maxXp = Math.floor(state.maxXp * 1.2);
+                playSound(600, 1200, 0.2);
+                showPopup(`🎉 LEVEL ${state.level}!`, 'achievement');
+            }
+
+            checkAchievements();
+            updateStats();
+            showPopup(`+${xp} XP`, 'xp-popup');
+        }
+
+        function checkAchievements() {
+            if (state.topics === 1 && !state.achievements.has('first')) {
+                state.achievements.add('first');
+                showPopup(achievements.first + ' Unlocked!', 'achievement');
+            }
+            if (state.topics === 5 && !state.achievements.has('five')) {
+                state.achievements.add('five');
+                showPopup(achievements.five + ' Unlocked!', 'achievement');
+            }
+            if (state.topics === 10 && !state.achievements.has('ten')) {
+                state.achievements.add('ten');
+                showPopup(achievements.ten + ' Unlocked!', 'achievement');
+            }
+            if (state.level === 5 && !state.achievements.has('level5')) {
+                state.achievements.add('level5');
+                showPopup(achievements.level5 + ' Unlocked!', 'achievement');
+            }
+            if (state.level === 10 && !state.achievements.has('level10')) {
+                state.achievements.add('level10');
+                showPopup(achievements.level10 + ' Unlocked!', 'achievement');
+            }
+        }
+
+        function showPopup(text, type) {
+            const div = document.createElement('div');
+            div.className = 'popup ' + type;
+            div.textContent = text;
+
+            if (type === 'achievement') {
+                div.className = 'achievement';
+            }
+
+            div.style.left = Math.random() * (window.innerWidth - 200) + 'px';
+            div.style.top = window.innerHeight / 2 + 'px';
+
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), type === 'achievement' ? 4000 : 2000);
+        }
+
+        function showSuggestions(topic) {
+            const chat = document.getElementById('chat');
+            const div = document.createElement('div');
+            div.className = 'suggestions';
+
+            const suggestions = ['teach me about slash commands', 'what should I learn next?', 'show my achievements'];
+
+            suggestions.forEach(s => {
+                const btn = document.createElement('button');
+                btn.className = 'suggestion-btn';
+                btn.textContent = s;
+                btn.onclick = (e) => {
+                    e.preventDefault();
+                    if (state.processing) return;
+                    document.getElementById('input').value = s;
+                    send();
+                };
+                div.appendChild(btn);
+            });
+
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function updateStats() {
+            document.getElementById('level').textContent = state.level;
+            document.getElementById('xp').textContent = state.xp;
+            document.getElementById('maxXp').textContent = state.maxXp;
+            document.getElementById('topics').textContent = state.topics;
+            document.getElementById('streak').textContent = state.streak;
+
+            localStorage.setItem('state', JSON.stringify({
+                level: state.level,
+                xp: state.xp,
+                maxXp: state.maxXp,
+                topics: state.topics,
+                streak: state.streak,
+                achievements: Array.from(state.achievements)
+            }));
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            const saved = localStorage.getItem('state');
+            if (saved) {
+                const data = JSON.parse(saved);
+                state.level = data.level;
+                state.xp = data.xp;
+                state.maxXp = data.maxXp;
+                state.topics = data.topics;
+                state.streak = data.streak;
+                state.achievements = new Set(data.achievements || []);
+            }
+
+            state.sound = localStorage.getItem('sound') !== 'false';
+            state.speech = localStorage.getItem('speech') !== 'false';
+
+            document.getElementById('soundBtn').textContent = state.sound ? '🔊' : '🔇';
+            document.getElementById('speechBtn').textContent = state.speech ? '🎤' : '🤐';
+
+            updateStats();
+            document.getElementById('input').focus();
+
+            addMessage('🎮 Welcome to Claude Quest!\n\nWhat do you want to learn? Try: "teach me about slash commands" or "show my stats"', 'ai');
+        });
+    </script>
+</body>
+</html>
